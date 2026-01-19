@@ -1,20 +1,23 @@
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { Book } from "../types/Book";
-import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
   book: Book;
+  onPress: (book: Book) => void;
 }
 
-export default function BookCard({ book }: Props) {
+export default function BookCard({ book, onPress }: Props) {
   const info = book.volumeInfo;
   const thumbnail = info?.imageLinks?.thumbnail || info?.imageLinks?.smallThumbnail;
   const rating = info?.averageRating;
-  const ratingCount = info?.ratingsCount;
 
   return (
-    <TouchableOpacity style={styles.card} activeOpacity={0.7}>
-      <View style={styles.content}>
+    <TouchableOpacity 
+      style={styles.card} 
+      activeOpacity={0.7}
+      onPress={() => onPress(book)}
+    >
+      <View style={styles.imageContainer}>
         {thumbnail ? (
           <Image
             source={{ uri: thumbnail.replace('http://', 'https://') }}
@@ -23,55 +26,35 @@ export default function BookCard({ book }: Props) {
           />
         ) : (
           <View style={styles.placeholderImage}>
-            <Ionicons name="book" size={40} color="#a0aec0" />
+            <Text style={styles.placeholderText}>📚</Text>
           </View>
         )}
+      </View>
+      
+      <View style={styles.content}>
+        <Text style={styles.title} numberOfLines={2}>
+          {info?.title || "Unknown Title"}
+        </Text>
         
-        <View style={styles.details}>
-          <Text style={styles.title} numberOfLines={2}>
-            {info?.title || "Unknown Title"}
+        <Text style={styles.author} numberOfLines={1}>
+          {info?.authors?.join(", ") || "Unknown Author"}
+        </Text>
+        
+        <View style={styles.footer}>
+          <Text style={styles.year}>
+            {info?.publishedDate?.split("-")[0] || "—"}
           </Text>
           
-          <Text style={styles.author} numberOfLines={1}>
-            {info?.authors?.join(", ") || "Unknown Author"}
-          </Text>
-          
-          <View style={styles.metaContainer}>
-            <Text style={styles.year}>
-              {info?.publishedDate?.split("-")[0] || "N/A"}
-            </Text>
-            {info?.pageCount && (
-              <>
-                <Text style={styles.separator}>•</Text>
-                <Text style={styles.pages}>{info.pageCount} pages</Text>
-              </>
-            )}
-          </View>
-
-          <View style={styles.ratingContainer}>
-            {rating ? (
-              <>
-                <Ionicons name="star" size={16} color="#f59e0b" />
-                <Text style={styles.rating}>{rating.toFixed(1)}</Text>
-                {ratingCount && (
-                  <Text style={styles.ratingCount}>({ratingCount.toLocaleString()})</Text>
-                )}
-              </>
-            ) : (
-              <>
-                <Ionicons name="star-outline" size={16} color="#cbd5e0" />
-                <Text style={styles.noRating}>No ratings yet</Text>
-              </>
-            )}
-          </View>
-
-          {info?.categories && (
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryText} numberOfLines={1}>
-                {info.categories[0]}
-              </Text>
+          {rating && (
+            <View style={styles.ratingContainer}>
+              <Text style={styles.ratingStar}>⭐</Text>
+              <Text style={styles.rating}>{rating.toFixed(1)}</Text>
             </View>
           )}
+        </View>
+        
+        <View style={styles.arrow}>
+          <Text style={styles.arrowText}>→</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -80,99 +63,92 @@ export default function BookCard({ book }: Props) {
 
 const styles = StyleSheet.create({
   card: {
+    flexDirection: "row",
+    marginBottom: 16,
     backgroundColor: "#fff",
-    borderRadius: 15,
-    marginBottom: 15,
-    overflow: "hidden",
-    elevation: 3,
+    borderRadius: 16,
+    padding: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 8,
+    elevation: 2,
   },
-  content: {
-    flexDirection: "row",
-    padding: 15,
+  imageContainer: {
+    marginRight: 16,
   },
   image: {
     width: 90,
     height: 130,
-    borderRadius: 8,
-    backgroundColor: "#f0f0f0",
+    borderRadius: 12,
+    backgroundColor: "#f5f5f5",
   },
   placeholderImage: {
     width: 90,
     height: 130,
-    borderRadius: 8,
-    backgroundColor: "#e2e8f0",
+    borderRadius: 12,
+    backgroundColor: "#f5f5f5",
     justifyContent: "center",
     alignItems: "center",
   },
-  details: {
+  placeholderText: {
+    fontSize: 32,
+  },
+  content: {
     flex: 1,
-    marginLeft: 15,
     justifyContent: "space-between",
+    paddingVertical: 4,
   },
   title: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#2d3748",
+    fontSize: 17,
+    fontWeight: "600",
+    color: "#1a1a1a",
+    lineHeight: 23,
+    letterSpacing: -0.4,
     marginBottom: 6,
-    lineHeight: 22,
   },
   author: {
     fontSize: 14,
-    color: "#718096",
+    color: "#666",
+    fontWeight: "400",
     marginBottom: 8,
+    letterSpacing: -0.1,
   },
-  metaContainer: {
+  footer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    gap: 12,
   },
   year: {
     fontSize: 13,
-    color: "#a0aec0",
-  },
-  separator: {
-    marginHorizontal: 6,
-    color: "#cbd5e0",
-  },
-  pages: {
-    fontSize: 13,
-    color: "#a0aec0",
+    color: "#999",
+    fontWeight: "500",
   },
   ratingContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    backgroundColor: "#fff5e6",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+  },
+  ratingStar: {
+    fontSize: 12,
   },
   rating: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#2d3748",
-    marginLeft: 4,
-  },
-  ratingCount: {
     fontSize: 13,
-    color: "#a0aec0",
-    marginLeft: 4,
-  },
-  noRating: {
-    fontSize: 13,
-    color: "#cbd5e0",
-    marginLeft: 4,
-  },
-  categoryBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: "#edf2f7",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  categoryText: {
-    fontSize: 12,
-    color: "#4a5568",
     fontWeight: "600",
+    color: "#ff9500",
+  },
+  arrow: {
+    position: "absolute",
+    right: 8,
+    top: "50%",
+    marginTop: -12,
+  },
+  arrowText: {
+    fontSize: 20,
+    color: "#e0e0e0",
   },
 });

@@ -1,12 +1,12 @@
-import { View, FlatList, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, FlatList, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, StatusBar } from "react-native";
 import { useState, useEffect } from "react";
-import { LinearGradient } from 'expo-linear-gradient';
 import SearchBar from "../components/SearchBar";
 import BookCard from "../components/BookCard";
 import FeaturedSection from "../components/FeaturedSection";
 import CategoryChips from "../components/CategoryChips";
+import BookDetailScreen from "./BookDetailScreen";
 import { searchBooks, getTrendingBooks } from "../api/books";
-import { Book } from "../types/Book";
+import { Book } from "../types/book";
 
 export default function HomeScreen() {
   const [query, setQuery] = useState("");
@@ -15,8 +15,8 @@ export default function HomeScreen() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
 
-  // Load trending books on mount
   useEffect(() => {
     loadTrendingBooks();
   }, []);
@@ -41,7 +41,7 @@ export default function HomeScreen() {
 
     if (text.length < 3) {
       setBooks([]);
-      setError("Type at least 3 characters to search");
+      setError("Type at least 3 characters");
       return;
     }
 
@@ -52,7 +52,7 @@ export default function HomeScreen() {
       const results = await searchBooks(text);
       setBooks(results ?? []);
       if (!results || results.length === 0) {
-        setError("No books found. Try a different search.");
+        setError("No books found");
       }
     } catch (err) {
       setError("Something went wrong. Please try again.");
@@ -75,87 +75,80 @@ export default function HomeScreen() {
     handleSearch(category);
   };
 
-  // Show welcome screen if no search query
+  const handleBookPress = (book: Book) => {
+    setSelectedBook(book);
+  };
+
+  const handleBackFromDetail = () => {
+    setSelectedBook(null);
+  };
+
+  // If a book is selected, show detail screen
+  if (selectedBook) {
+    return <BookDetailScreen book={selectedBook} onBack={handleBackFromDetail} />;
+  }
+
   const showWelcomeScreen = query.length === 0 && books.length === 0;
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#667eea', '#764ba2', '#f093fb']}
-        style={styles.header}
-      >
-        <View style={styles.headerContent}>
-          <Text style={styles.appTitle}>📚 BookQuest</Text>
-          <Text style={styles.subtitle}>Discover Your Next Great Read</Text>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      
+      {/* Minimal Header */}
+      <View style={styles.header}>
+        <Text style={styles.logo}>Books</Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.iconButton}>
+            <Text style={styles.iconText}>☰</Text>
+          </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </View>
 
-      <View style={styles.searchContainer}>
+      <View style={styles.searchWrapper}>
         <SearchBar value={query} onChange={handleSearch} />
       </View>
 
       {showWelcomeScreen ? (
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Featured/Trending Section */}
-          <FeaturedSection books={trendingBooks} />
+          <FeaturedSection books={trendingBooks} onBookPress={handleBookPress} />
 
-          {/* Categories */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Browse by Category</Text>
+            <Text style={styles.sectionTitle}>Categories</Text>
             <CategoryChips onSelectCategory={handleCategorySelect} />
           </View>
 
-          {/* Stats Section */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>10M+</Text>
-              <Text style={styles.statLabel}>Books</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>500K+</Text>
-              <Text style={styles.statLabel}>Authors</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>50M+</Text>
-              <Text style={styles.statLabel}>Reviews</Text>
-            </View>
-          </View>
-
-          {/* Quick Actions */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Quick Start</Text>
+            <Text style={styles.sectionTitle}>Explore</Text>
             <TouchableOpacity 
-              style={styles.quickAction}
+              style={styles.exploreCard}
               onPress={() => handleSearch("bestseller")}
             >
-              <Text style={styles.quickActionIcon}>🏆</Text>
-              <View style={styles.quickActionText}>
-                <Text style={styles.quickActionTitle}>Bestsellers</Text>
-                <Text style={styles.quickActionSubtitle}>See what's trending now</Text>
+              <View>
+                <Text style={styles.exploreTitle}>Bestsellers</Text>
+                <Text style={styles.exploreSubtitle}>Popular books right now</Text>
               </View>
+              <Text style={styles.exploreArrow}>→</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.quickAction}
+              style={styles.exploreCard}
               onPress={() => handleSearch("new releases")}
             >
-              <Text style={styles.quickActionIcon}>✨</Text>
-              <View style={styles.quickActionText}>
-                <Text style={styles.quickActionTitle}>New Releases</Text>
-                <Text style={styles.quickActionSubtitle}>Fresh books just published</Text>
+              <View>
+                <Text style={styles.exploreTitle}>New Releases</Text>
+                <Text style={styles.exploreSubtitle}>Latest publications</Text>
               </View>
+              <Text style={styles.exploreArrow}>→</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       ) : (
         <View style={styles.resultsContainer}>
-          {/* Back Button */}
           <TouchableOpacity 
             style={styles.backButton}
             onPress={handleBackToHome}
             activeOpacity={0.7}
           >
-            <Text style={styles.backIcon}>←</Text>
-            <Text style={styles.backText}>Back to Home</Text>
+            <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
 
           {error && (
@@ -166,20 +159,22 @@ export default function HomeScreen() {
 
           {loading && (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#667eea" />
-              <Text style={styles.loadingText}>Searching books...</Text>
+              <ActivityIndicator size="large" color="#000" />
+              <Text style={styles.loadingText}>Searching...</Text>
             </View>
           )}
 
           {!loading && books.length > 0 && (
             <>
               <Text style={styles.resultsCount}>
-                Found {books.length} {books.length === 1 ? 'book' : 'books'}
+                {books.length} {books.length === 1 ? 'result' : 'results'}
               </Text>
               <FlatList
                 data={books}
                 keyExtractor={(item, index) => item.id || index.toString()}
-                renderItem={({ item }) => <BookCard book={item} />}
+                renderItem={({ item }) => (
+                  <BookCard book={item} onPress={handleBookPress} />
+                )}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.listContent}
               />
@@ -188,9 +183,9 @@ export default function HomeScreen() {
 
           {!loading && !error && books.length === 0 && query.length >= 3 && (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyIcon}>📚</Text>
-              <Text style={styles.emptyText}>No books found</Text>
-              <Text style={styles.emptySubtext}>Try searching with different keywords</Text>
+              <Text style={styles.emptyEmoji}>📚</Text>
+              <Text style={styles.emptyText}>No results found</Text>
+              <Text style={styles.emptySubtext}>Try a different search term</Text>
             </View>
           )}
         </View>
@@ -202,179 +197,152 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#ffffff",
   },
   header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 24,
     paddingTop: 60,
-    paddingBottom: 30,
-    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: "#ffffff",
   },
-  headerContent: {
+  logo: {
+    fontSize: 26,
+    fontWeight: "700",
+    color: "#000",
+    letterSpacing: -0.8,
+  },
+  headerRight: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
     alignItems: "center",
   },
-  appTitle: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 8,
+  iconText: {
+    fontSize: 20,
+    color: "#000",
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#fff",
-    opacity: 0.9,
-  },
-  searchContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
+  searchWrapper: {
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    backgroundColor: "#ffffff",
   },
   content: {
     flex: 1,
+    backgroundColor: "#ffffff",
   },
   section: {
-    padding: 20,
+    paddingHorizontal: 24,
+    marginBottom: 40,
   },
   sectionTitle: {
     fontSize: 22,
-    fontWeight: "bold",
-    color: "#2d3748",
-    marginBottom: 15,
+    fontWeight: "700",
+    color: "#000",
+    marginBottom: 16,
+    letterSpacing: -0.5,
   },
-  statsContainer: {
+  exploreCard: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 20,
-    backgroundColor: "#fff",
-    marginHorizontal: 20,
-    marginVertical: 10,
-    borderRadius: 15,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-  },
-  statCard: {
+    justifyContent: "space-between",
     alignItems: "center",
-  },
-  statNumber: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#667eea",
-  },
-  statLabel: {
-    fontSize: 14,
-    color: "#718096",
-    marginTop: 4,
-  },
-  quickAction: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 12,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    backgroundColor: "#fafafa",
+    borderRadius: 16,
     marginBottom: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
   },
-  quickActionIcon: {
-    fontSize: 32,
-    marginRight: 15,
-  },
-  quickActionText: {
-    flex: 1,
-  },
-  quickActionTitle: {
-    fontSize: 16,
+  exploreTitle: {
+    fontSize: 17,
     fontWeight: "600",
-    color: "#2d3748",
+    color: "#000",
+    letterSpacing: -0.3,
+    marginBottom: 4,
   },
-  quickActionSubtitle: {
-    fontSize: 14,
-    color: "#718096",
-    marginTop: 2,
+  exploreSubtitle: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "400",
+  },
+  exploreArrow: {
+    fontSize: 24,
+    color: "#000",
   },
   resultsContainer: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 24,
+    backgroundColor: "#ffffff",
   },
   backButton: {
-    flexDirection: "row",
-    alignItems: "center",
+    paddingVertical: 12,
     marginBottom: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    alignSelf: "flex-start",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  backIcon: {
-    fontSize: 20,
-    color: "#667eea",
-    marginRight: 6,
   },
   backText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
-    color: "#667eea",
+    color: "#000",
+    letterSpacing: -0.2,
   },
   resultsCount: {
-    fontSize: 16,
-    color: "#718096",
-    marginBottom: 15,
-    fontWeight: "600",
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 20,
+    fontWeight: "500",
   },
   listContent: {
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   errorContainer: {
-    backgroundColor: "#fee",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 15,
+    padding: 20,
+    backgroundColor: "#fff5f5",
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#fee",
   },
   errorText: {
     color: "#c53030",
+    fontSize: 14,
     textAlign: "center",
+    fontWeight: "500",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    gap: 16,
   },
   loadingText: {
-    marginTop: 10,
-    color: "#718096",
     fontSize: 16,
+    color: "#666",
+    fontWeight: "500",
   },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingTop: 60,
+    paddingTop: 100,
   },
-  emptyIcon: {
+  emptyEmoji: {
     fontSize: 64,
     marginBottom: 16,
   },
   emptyText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#2d3748",
+    color: "#000",
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: "#718096",
+    color: "#999",
   },
 });

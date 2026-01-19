@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { useState } from "react";
 
 interface Props {
@@ -6,14 +6,14 @@ interface Props {
 }
 
 const categories = [
-  { name: "Fiction", emoji: "📚", query: "fiction" },
-  { name: "Science", emoji: "🔬", query: "science" },
-  { name: "Biography", emoji: "👤", query: "biography" },
-  { name: "Mystery", emoji: "🔍", query: "mystery" },
-  { name: "Romance", emoji: "💕", query: "romance" },
-  { name: "Fantasy", emoji: "🐉", query: "fantasy" },
-  { name: "History", emoji: "📜", query: "history" },
-  { name: "Self-Help", emoji: "💪", query: "self help" },
+  { name: "Fiction", query: "fiction" },
+  { name: "Science", query: "science" },
+  { name: "Biography", query: "biography" },
+  { name: "Mystery", query: "mystery" },
+  { name: "Romance", query: "romance" },
+  { name: "Fantasy", query: "fantasy" },
+  { name: "History", query: "history" },
+  { name: "Self-Help", query: "self help" },
 ];
 
 export default function CategoryChips({ onSelectCategory }: Props) {
@@ -39,7 +39,6 @@ export default function CategoryChips({ onSelectCategory }: Props) {
             onPress={() => handlePress(category)}
             activeOpacity={0.7}
           >
-            <Text style={styles.emoji}>{category.emoji}</Text>
             <Text style={[styles.text, isSelected && styles.textSelected]}>
               {category.name}
             </Text>
@@ -52,36 +51,22 @@ export default function CategoryChips({ onSelectCategory }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 5,
+    gap: 8,
   },
   chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 10,
-    marginRight: 10,
-    backgroundColor: "#fff",
+    backgroundColor: "#f8f8f8",
     borderRadius: 20,
-    borderWidth: 2,
-    borderColor: "#e2e8f0",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
   },
   chipSelected: {
-    backgroundColor: "#667eea",
-    borderColor: "#667eea",
-  },
-  emoji: {
-    fontSize: 18,
-    marginRight: 6,
+    backgroundColor: "#000",
   },
   text: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#2d3748",
+    fontWeight: "500",
+    color: "#000",
+    letterSpacing: -0.2,
   },
   textSelected: {
     color: "#fff",

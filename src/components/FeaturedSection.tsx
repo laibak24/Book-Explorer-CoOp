@@ -3,9 +3,10 @@ import { Book } from "../types/Book";
 
 interface Props {
   books: Book[];
+  onBookPress?: (book: Book) => void;
 }
 
-export default function FeaturedSection({ books }: Props) {
+export default function FeaturedSection({ books, onBookPress }: Props) {
   if (!books || books.length === 0) {
     return null;
   }
@@ -13,10 +14,8 @@ export default function FeaturedSection({ books }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>🔥 Trending This Week</Text>
-        <TouchableOpacity>
-          <Text style={styles.viewAll}>View All →</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>Featured</Text>
+        <Text style={styles.subtitle}>Trending books this week</Text>
       </View>
       
       <ScrollView 
@@ -24,13 +23,18 @@ export default function FeaturedSection({ books }: Props) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {books.slice(0, 5).map((book, index) => {
+        {books.slice(0, 6).map((book, index) => {
           const info = book.volumeInfo;
           const thumbnail = info?.imageLinks?.thumbnail || info?.imageLinks?.smallThumbnail;
           
           return (
-            <TouchableOpacity key={book.id || index} style={styles.card}>
-              <View style={styles.cardContent}>
+            <TouchableOpacity 
+              key={book.id || index} 
+              style={styles.card}
+              activeOpacity={0.8}
+              onPress={() => onBookPress?.(book)}
+            >
+              <View style={styles.coverContainer}>
                 {thumbnail ? (
                   <Image 
                     source={{ uri: thumbnail.replace('http://', 'https://') }}
@@ -39,24 +43,21 @@ export default function FeaturedSection({ books }: Props) {
                   />
                 ) : (
                   <View style={styles.placeholderCover}>
-                    <Text style={styles.placeholderText}>📖</Text>
+                    <Text style={styles.placeholderEmoji}>📚</Text>
                   </View>
                 )}
-                <View style={styles.info}>
-                  <Text style={styles.bookTitle} numberOfLines={2}>
-                    {info?.title || "Unknown Title"}
-                  </Text>
-                  <Text style={styles.author} numberOfLines={1}>
-                    {info?.authors?.[0] || "Unknown Author"}
-                  </Text>
-                  <View style={styles.ratingContainer}>
-                    <Text style={styles.star}>⭐</Text>
-                    <Text style={styles.rating}>
-                      {info?.averageRating || "N/A"}
-                    </Text>
+                {info?.averageRating && (
+                  <View style={styles.ratingBadge}>
+                    <Text style={styles.ratingText}>⭐ {info.averageRating.toFixed(1)}</Text>
                   </View>
-                </View>
+                )}
               </View>
+              <Text style={styles.bookTitle} numberOfLines={2}>
+                {info?.title || "Unknown Title"}
+              </Text>
+              <Text style={styles.author} numberOfLines={1}>
+                {info?.authors?.[0] || "Unknown"}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -67,85 +68,77 @@ export default function FeaturedSection({ books }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 20,
+    marginBottom: 40,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 15,
+    paddingHorizontal: 24,
+    marginBottom: 16,
   },
   title: {
     fontSize: 22,
-    fontWeight: "bold",
-    color: "#2d3748",
+    fontWeight: "700",
+    color: "#000",
+    letterSpacing: -0.5,
+    marginBottom: 4,
   },
-  viewAll: {
+  subtitle: {
     fontSize: 14,
-    color: "#667eea",
-    fontWeight: "600",
+    color: "#666",
+    fontWeight: "400",
   },
   scrollContent: {
-    paddingHorizontal: 15,
+    paddingHorizontal: 24,
+    gap: 16,
   },
   card: {
-    width: 160,
-    marginHorizontal: 5,
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    overflow: "hidden",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    width: 130,
   },
-  cardContent: {
-    padding: 12,
+  coverContainer: {
+    position: "relative",
+    marginBottom: 12,
   },
   cover: {
-    width: "100%",
-    height: 180,
-    borderRadius: 10,
-    backgroundColor: "#f0f0f0",
+    width: 130,
+    height: 195,
+    borderRadius: 12,
+    backgroundColor: "#f5f5f5",
   },
   placeholderCover: {
-    width: "100%",
-    height: 180,
-    borderRadius: 10,
-    backgroundColor: "#e0e7ff",
+    width: 130,
+    height: 195,
+    borderRadius: 12,
+    backgroundColor: "#f5f5f5",
     justifyContent: "center",
     alignItems: "center",
   },
-  placeholderText: {
-    fontSize: 48,
+  placeholderEmoji: {
+    fontSize: 40,
   },
-  info: {
-    marginTop: 10,
+  ratingBadge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  ratingText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#fff",
   },
   bookTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
-    color: "#2d3748",
+    color: "#000",
     marginBottom: 4,
+    lineHeight: 20,
+    letterSpacing: -0.3,
   },
   author: {
-    fontSize: 12,
-    color: "#718096",
-    marginBottom: 6,
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  star: {
-    fontSize: 14,
-    marginRight: 4,
-  },
-  rating: {
     fontSize: 13,
-    fontWeight: "600",
-    color: "#2d3748",
+    color: "#666",
+    fontWeight: "400",
   },
 });
