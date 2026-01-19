@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, StatusBar, Linking } from "react-native";
 import { useState, useEffect } from "react";
-import { Book } from "../types/Book";
-import { getNYTimesReviews } from "../api/nytimes";
-import { Review } from "../types/Review";
+import { Book } from "../types/book";
+import { getNYTimesReviews, NYTimesError } from "../api/nytimes";
+import { Review } from "../types/reviews";
 import RatingReviews from "../components/RatingReviews";
+import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
   book: Book;
@@ -13,6 +14,7 @@ interface Props {
 export default function BookDetailScreen({ book, onBack }: Props) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
+  const [reviewError, setReviewError] = useState<NYTimesError | null>(null);
   
   const info = book.volumeInfo;
   const thumbnail = info?.imageLinks?.large || info?.imageLinks?.medium || 
@@ -26,12 +28,37 @@ export default function BookDetailScreen({ book, onBack }: Props) {
 
   const loadReviews = async () => {
     try {
+      setLoadingReviews(true);
+      setReviewError(null);
+      
       const bookTitle = info?.title || "";
       const author = info?.authors?.[0] || "";
-      const reviewData = await getNYTimesReviews(bookTitle, author);
-      setReviews(reviewData);
+      
+      if (!bookTitle) {
+        setReviewError({
+          message: "Book title not available",
+          type: 'invalid_key'
+        });
+        setLoadingReviews(false);
+        return;
+      }
+
+      const { reviews: reviewData, error } = await getNYTimesReviews(bookTitle, author);
+      
+      if (error) {
+        setReviewError(error);
+        setReviews([]);
+      } else {
+        setReviews(reviewData);
+        setReviewError(null);
+      }
     } catch (error) {
       console.error("Failed to load reviews:", error);
+      setReviewError({
+        message: "An unexpected error occurred while loading reviews.",
+        type: 'unknown'
+      });
+      setReviews([]);
     } finally {
       setLoadingReviews(false);
     }
@@ -43,6 +70,10 @@ export default function BookDetailScreen({ book, onBack }: Props) {
     }
   };
 
+  const handleRetryReviews = () => {
+    loadReviews();
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
@@ -50,7 +81,7 @@ export default function BookDetailScreen({ book, onBack }: Props) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Text style={styles.backText}>←</Text>
+          <Ionicons name="arrow-back" size={20} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Book Details</Text>
         <View style={styles.placeholder} />
@@ -155,10 +186,43 @@ export default function BookDetailScreen({ book, onBack }: Props) {
 
         {/* NYTimes Reviews */}
         <View style={styles.reviewsSection}>
-          <Text style={styles.sectionTitle}>Reviews</Text>
-          {loadingReviews ? (
-            <ActivityIndicator size="large" color="#000" style={styles.loader} />
-          ) : (
+          <Text style={styles.sectionTitle}>NY Times Reviews</Text>
+          
+          {loadingReviews && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#000" />
+              <Text style={styles.loadingText}>Loading reviews...</Text>
+            </View>
+          )}
+
+          {!loadingReviews && reviewError && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorEmoji}>
+                {reviewError.type === 'network' ? '📡' : 
+                 reviewError.type === 'not_found' ? '🔍' : 
+                 reviewError.type === 'rate_limit' ? '⏱️' : '⚠️'}
+              </Text>
+              <Text style={styles.errorTitle}>
+                {reviewError.type === 'network' ? 'Connection Issue' :
+                 reviewError.type === 'not_found' ? 'No Reviews Found' :
+                 reviewError.type === 'rate_limit' ? 'Rate Limit Reached' :
+                 reviewError.type === 'invalid_key' ? 'Configuration Error' :
+                 'Something Went Wrong'}
+              </Text>
+              <Text style={styles.errorMessage}>{reviewError.message}</Text>
+              {reviewError.type !== 'not_found' && (
+                <TouchableOpacity 
+                  style={styles.retryButton}
+                  onPress={handleRetryReviews}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.retryButtonText}>Try Again</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          {!loadingReviews && !reviewError && (
             <RatingReviews reviews={reviews} />
           )}
         </View>
@@ -167,7 +231,7 @@ export default function BookDetailScreen({ book, onBack }: Props) {
         {info?.previewLink && (
           <TouchableOpacity style={styles.previewButton} onPress={openPreview}>
             <Text style={styles.previewButtonText}>Preview on Google Books</Text>
-            <Text style={styles.previewArrow}>→</Text>
+            
           </TouchableOpacity>
         )}
 
@@ -353,8 +417,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginBottom: 24,
   },
-  loader: {
-    marginVertical: 32,
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 15,
+    color: "#666",
+    fontWeight: "500",
+  },
+  errorContainer: {
+    backgroundColor: "#fefefe",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#fee",
+  },
+  errorEmoji: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#666",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: "#000",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  retryButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#fff",
+    letterSpacing: -0.2,
   },
   previewButton: {
     flexDirection: "row",

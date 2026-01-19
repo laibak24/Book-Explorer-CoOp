@@ -7,6 +7,7 @@ import CategoryChips from "../components/CategoryChips";
 import BookDetailScreen from "./BookDetailScreen";
 import { searchBooks, getTrendingBooks } from "../api/books";
 import { Book } from "../types/book";
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
   const [query, setQuery] = useState("");
@@ -96,11 +97,8 @@ export default function HomeScreen() {
       
       {/* Minimal Header */}
       <View style={styles.header}>
-        <Text style={styles.logo}>Books</Text>
+        <Text style={styles.logo}>Book Explorer</Text>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.iconText}>☰</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -117,29 +115,6 @@ export default function HomeScreen() {
             <CategoryChips onSelectCategory={handleCategorySelect} />
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Explore</Text>
-            <TouchableOpacity 
-              style={styles.exploreCard}
-              onPress={() => handleSearch("bestseller")}
-            >
-              <View>
-                <Text style={styles.exploreTitle}>Bestsellers</Text>
-                <Text style={styles.exploreSubtitle}>Popular books right now</Text>
-              </View>
-              <Text style={styles.exploreArrow}>→</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.exploreCard}
-              onPress={() => handleSearch("new releases")}
-            >
-              <View>
-                <Text style={styles.exploreTitle}>New Releases</Text>
-                <Text style={styles.exploreSubtitle}>Latest publications</Text>
-              </View>
-              <Text style={styles.exploreArrow}>→</Text>
-            </TouchableOpacity>
-          </View>
         </ScrollView>
       ) : (
         <View style={styles.resultsContainer}>
@@ -148,7 +123,10 @@ export default function HomeScreen() {
             onPress={handleBackToHome}
             activeOpacity={0.7}
           >
-            <Text style={styles.backText}>← Back</Text>
+            <View style={styles.backButtonContent}>
+              <Ionicons name="arrow-back" size={20} color="#000" />
+              <Text style={styles.backText}>Back</Text>
+            </View>
           </TouchableOpacity>
 
           {error && (
@@ -284,6 +262,12 @@ const styles = StyleSheet.create({
   backButton: {
     paddingVertical: 12,
     marginBottom: 20,
+    alignSelf: "flex-start",
+  },
+  backButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   backText: {
     fontSize: 16,
