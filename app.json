@@ -4,7 +4,7 @@
     "slug": "book-explorer",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/bookicon.png",
+    "icon": "./assets/picture.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -25,7 +25,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/picture.png"
     },
     "plugins": [
       "expo-font"

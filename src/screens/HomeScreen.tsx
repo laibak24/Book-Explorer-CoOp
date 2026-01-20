@@ -6,7 +6,7 @@ import FeaturedSection from "../components/FeaturedSection";
 import CategoryChips from "../components/CategoryChips";
 import BookDetailScreen from "./BookDetailScreen";
 import { searchBooks, getTrendingBooks } from "../api/books";
-import { Book } from "../types/book";
+import { Book } from "../types/Book";
 import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {

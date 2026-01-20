@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, StatusBar, Linking } from "react-native";
 import { useState, useEffect } from "react";
-import { Book } from "../types/book";
+import { Book } from "../types/Book";
 import { getNYTimesReviews, NYTimesError } from "../api/nytimes";
 import { Review } from "../types/reviews";
 import RatingReviews from "../components/RatingReviews";
@@ -81,7 +81,8 @@ export default function BookDetailScreen({ book, onBack }: Props) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={20} color="#000" />
+           <Text style={{ fontSize: 20, color: '#000' }}>{'\u2190'}</Text>
+         
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Book Details</Text>
         <View style={styles.placeholder} />
